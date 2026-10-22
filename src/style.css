@@ -300,6 +300,18 @@ body {
   box-shadow: 0 0 16px color-mix(in srgb, var(--axis) 35%, transparent);
 }
 
+/* Bigger tap targets on phones/tablets. */
+@media (pointer: coarse) {
+  .face-switch-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  .face-switch-btn i {
+    width: 10px;
+    height: 10px;
+  }
+}
+
 .btn-bar {
   display: flex;
   gap: 8px;

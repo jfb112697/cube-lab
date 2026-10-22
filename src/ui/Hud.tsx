@@ -63,12 +63,19 @@ function HintBar() {
   const hoverBands = useStore((s) => s.hoverBands);
   const selection = useStore((s) => s.selection);
   const scrambling = useStore((s) => s.scrambling);
+  const coarse = useMemo(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches,
+    [],
+  );
 
   let text = '';
   if (scrambling) text = 'Scrambling — hang tight…';
-  else if (phase === 'selected') text = 'Pick a layer on the sticker’s switch (or Tab), then click a ring arrow to spin';
+  else if (phase === 'selected') text = 'Pick a layer on the sticker’s switch, then tap a ring arrow to spin';
   else if (phase === 'hover') text = 'Click a sticker to spin its row or column';
-  else text = 'Hover a sticker to light up its layers — click to choose one';
+  else
+    text = coarse
+      ? 'Tap a sticker to choose its row or column — one finger orbits, pinch to zoom'
+      : 'Hover a sticker to light up its layers — click to choose one';
 
   const bands = selection?.bands ?? hoverBands;
   return (

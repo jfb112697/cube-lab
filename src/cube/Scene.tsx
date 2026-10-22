@@ -506,46 +506,64 @@ function Indicators({ engine }: { engine: CubeEngine }) {
 /* -------------------------------------------------------------------- scene */
 
 export default function Scene({ engine }: { engine: CubeEngine }) {
+  // Where the pointer went down, so a background *tap* cancels the selection
+  // but an orbit drag / pinch (which also ends with a pointer-up miss) does
+  // not. Matters most on touch, where there's no hover to recover with.
+  const downPos = useRef<{ x: number; y: number } | null>(null);
+
   return (
-    <Canvas
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-      camera={{ position: [4.9, 4.0, 5.9], fov: 36 }}
-      onPointerMissed={() => {
-        const st = useStore.getState();
-        if (st.phase === 'selected') engine.cancelSelection();
+    <div
+      style={{ height: '100%' }}
+      onPointerDown={(e) => {
+        downPos.current = { x: e.clientX, y: e.clientY };
       }}
     >
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[6, 9, 4]} intensity={1.3} />
-      <directionalLight position={[-7, 3, -5]} intensity={0.35} color="#8fb4ff" />
-      <pointLight position={[0, -5, 3]} intensity={12} color="#ffd9a0" distance={10} decay={2} />
+      <Canvas
+        dpr={[1, 2]}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        camera={{ position: [6.4, 5.2, 7.7], fov: 36 }}
+        onPointerMissed={(e) => {
+          const d = downPos.current;
+          const moved = d ? Math.hypot(e.clientX - d.x, e.clientY - d.y) : 0;
+          if (moved > 8) return; // orbit drag or pinch, not a tap
+          const st = useStore.getState();
+          if (st.phase === 'selected') engine.cancelSelection();
+        }}
+      >
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[6, 9, 4]} intensity={1.3} />
+        <directionalLight position={[-7, 3, -5]} intensity={0.35} color="#8fb4ff" />
+        <pointLight position={[0, -5, 3]} intensity={12} color="#ffd9a0" distance={10} decay={2} />
 
-      <Environment resolution={128}>
-        <Lightformer form="rect" intensity={1.6} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[9, 9, 1]} color="#cfe0ff" />
-        <Lightformer form="rect" intensity={1.2} position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[7, 3, 1]} color="#ffffff" />
-        <Lightformer form="rect" intensity={0.9} position={[5, -1, -1]} rotation-y={-Math.PI / 2} scale={[7, 3, 1]} color="#ffe9d0" />
-        <Lightformer form="circle" intensity={1.4} position={[0, 0, 6]} scale={[3, 3, 1]} color="#ffffff" />
-      </Environment>
+        <Environment resolution={128}>
+          <Lightformer form="rect" intensity={1.6} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[9, 9, 1]} color="#cfe0ff" />
+          <Lightformer form="rect" intensity={1.2} position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[7, 3, 1]} color="#ffffff" />
+          <Lightformer form="rect" intensity={0.9} position={[5, -1, -1]} rotation-y={-Math.PI / 2} scale={[7, 3, 1]} color="#ffe9d0" />
+          <Lightformer form="circle" intensity={1.4} position={[0, 0, 6]} scale={[3, 3, 1]} color="#ffffff" />
+        </Environment>
 
-      <Controller engine={engine} />
-      <Cubies engine={engine} />
-      <Indicators engine={engine} />
+        <Controller engine={engine} />
+        <Cubies engine={engine} />
+        <Indicators engine={engine} />
 
-      <ContactShadows position={[0, -2.95, 0]} opacity={0.6} scale={11} blur={2.6} far={4.5} resolution={512} color="#000000" />
+        <ContactShadows position={[0, -2.95, 0]} opacity={0.6} scale={11} blur={2.6} far={4.5} resolution={512} color="#000000" />
 
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        enableDamping
-        dampingFactor={0.08}
-        minDistance={5.5}
-        maxDistance={14}
-        minPolarAngle={0.12}
-        maxPolarAngle={Math.PI - 0.35}
-        rotateSpeed={0.85}
-        autoRotateSpeed={0.7}
-      />
-    </Canvas>
+        <OrbitControls
+          makeDefault
+          enablePan={false}
+          enableDamping
+          dampingFactor={0.08}
+          minDistance={5.5}
+          maxDistance={18}
+          minPolarAngle={0.12}
+          maxPolarAngle={Math.PI - 0.35}
+          rotateSpeed={0.85}
+          autoRotateSpeed={0.7}
+          // Prebuilt touch gestures from three.js OrbitControls: one finger
+          // orbits, two-finger pinch dollies in and spread dollies out.
+          touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
+        />
+      </Canvas>
+    </div>
   );
 }
